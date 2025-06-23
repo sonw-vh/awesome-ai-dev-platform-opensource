@@ -1,0 +1,88 @@
+version: '3.0'
+services:
+  aixblock:
+    image: aixblock/workflow:latest     #ghcr.io/activepieces/activepieces:0.46.7
+    container_name: aixblock
+    restart: unless-stopped
+    ## Enable the following line if you already use AP_EXECUTION_MODE with SANDBOXED or old activepieces, checking the breaking change documentation for more info.
+    ## privileged: true
+    ports:
+      - '8080:80'
+    depends_on:
+      - postgres
+      - redis
+    # env_file: .env
+    environment:
+      ## Random Long Password (Optional for community edition)
+      - API_KEY=49c52fd5297a9593c1c8a6e862e12aa62564e18e4b652cd00d5574298af002bd49a336292386b97852d804c007bc33365e61eebe9d02b6930b5973bed86d8b29
+      ## 256 bit encryption key, 32 hex character
+      - ENCRYPTION_KEY=5e3f8d3f4645950e199cca65f51b49a0
+      ## JWT Secret
+      - JWT_SECRET=3fb5a2bf5f75fee3fecd3905a2caddbcbc1f136651024730480ee821160200de
+      ## It's advisable to consult the documentation and use the tools/deploy.sh to generate the passwords, keys, instead of manually filling them.
+      - AP_ENGINE_EXECUTABLE_PATH=dist/packages/engine/main.js
+
+      ## Random Long Password (Optional for community edition)
+      - AP_API_KEY=49c52fd5297a9593c1c8a6e862e12aa62564e18e4b652cd00d5574298af002bd49a336292386b97852d804c007bc33365e61eebe9d02b6930b5973bed86d8b29
+
+      ## 256 bit encryption key, 32 hex character
+      - AP_ENCRYPTION_KEY=5e3f8d3f4645950e199cca65f51b49a0
+      ## JWT Secret
+      - AP_JWT_SECRET=3fb5a2bf5f75fee3fecd3905a2caddbcbc1f136651024730480ee821160200de
+      - AP_EDITION=ee
+      - AP_ENVIRONMENT=prod
+      - AP_FRONTEND_URL=https://workflow.aixblock.io
+      - AP_WEBHOOK_TIMEOUT_SECONDS=30
+      - AP_TRIGGER_DEFAULT_POLL_INTERVAL=5
+      - AP_POSTGRES_DATABASE=activepieces
+      - AP_BLOCKS_SOURCE=DB
+      - AP_BLOCKS_SYNC_MODE=OFFICIAL_AUTO
+      - AP_POSTGRES_HOST=postgres
+      - AP_POSTGRES_PORT=5432
+      - AP_POSTGRES_USERNAME=postgres
+      - AP_POSTGRES_PASSWORD=@9^xwWA
+      - AP_EXECUTION_MODE=UNSANDBOXED    #UNSANDBOXED
+      - AP_REDIS_HOST=redis
+      - AP_REDIS_PORT=6379
+      - AP_FLOW_TIMEOUT_SECONDS=1600
+      - AP_TELEMETRY_ENABLED=true
+      - AP_SHOW_CHANGELOG=false
+      - AP_TEMPLATES_SOURCE_URL="https://cloud.activepieces.com/api/v1/flow-templates"
+      - AP_GOOGLE_CLIENT_ID=870719828563-lkp124fot6djnvu96od9gvksh8qse0va.apps.googleusercontent.com
+      - AP_GOOGLE_CLIENT_SECRET=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
+      - AP_AIXBLOCK_CLIENT_ID=1LrxsiXpdU58gsr9eiMfoCs2fGsUHmh24inboALp
+      - AP_AIXBLOCK_CLIENT_SECRET=mxecLR3jMGNWdN6HdU5coCOSpyuWhiZgR1Z6w8tkrUYE19LMIsi4NtwOR8dFYSNKvHErRN0qdotdgWoeu3qeufSldwZk9ty6wPplxeBOXWKA56kCNYb7THp3VHEOTTcu
+      - AP_AIXBLOCK_PLATFORM_URI=https://app.aixblock.io
+      - CRAWLEE_DISABLE_MEMORY_USAGE_LOGGING=1
+
+    volumes:
+      - ./cache:/usr/src/app/cache
+    networks:
+      - aixblock
+  postgres:
+    image: 'postgres:14.4'
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      - 'POSTGRES_DB=activepieces'
+      - 'POSTGRES_PASSWORD=@9^xwWA'
+      - 'POSTGRES_USER=postgres'
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - aixblock
+  redis:
+    image: 'redis:7.0.7'
+    container_name: redis
+    restart: unless-stopped
+    volumes:
+      - 'redis_data:/data'
+    networks:
+      - aixblock
+volumes:
+  postgres_data:
+  redis_data:
+networks:
+  aixblock:
