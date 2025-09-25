@@ -3,6 +3,7 @@ import { useApi } from "@/providers/ApiProvider";
 import useDebouncedEffect from "../useDebouncedEffect";
 import { TModelTask, TModelTasks, validateModelTasksModel } from "@/models/modelMarketplace";
 import { extractErrorMessage } from "@/utils/error";
+import { useSafeModelTaskManagement, IDORAttackDetector } from "@/utils/idorProtection";
 
 export default function useModelTasks() {
   const [list, setList] = React.useState<TModelTasks>([]);
@@ -11,6 +12,10 @@ export default function useModelTasks() {
   const [loadingError, setLoadingError] = React.useState<null | string>(null);
   const listCtrlRef = useRef<AbortController | null>(null);
   const api = useApi();
+  
+  // IDOR Protection
+  const { assignTasks: safeAssignTasks, unassignTasks: safeUnassignTasks } = useSafeModelTaskManagement();
+  const attackDetector = IDORAttackDetector.getInstance();
 
   const refresh = useCallback(() => {
     listCtrlRef.current && !listCtrlRef.current?.signal.aborted && listCtrlRef.current?.abort("New request");
@@ -70,27 +75,54 @@ export default function useModelTasks() {
     });
   }, [api]);
 
-  const assignTasks = useCallback((modelID: number, modelTaskIds: number[]) => {
-    return api.call("assignModelTasks", {
-      params: {
-        model_id: modelID.toString(),
-      },
-      body: {
-        task_ids: modelTaskIds,
-      },
-    });
-  }, [api]);
+  const assignTasks = useCallback(async (modelID: number, modelTaskIds: number[]) => {
+    try {
+      // Check for potential IDOR attack
+      const currentUserId = getCurrentUserId();
+      if (currentUserId && !attackDetector.recordAccess(modelID, currentUserId)) {
+        throw new Error("Too many requests. Please slow down.");
+      }
 
-  const unassignTasks = useCallback((modelID: number, modelTaskIds: number[]) => {
-    return api.call("unassignModelTasks", {
-      params: {
-        model_id: modelID.toString(),
-      },
-      body: {
-        task_ids: modelTaskIds,
-      },
-    });
-  }, [api]);
+      // Use safe assignment with IDOR protection
+      const result = await safeAssignTasks(modelID, modelTaskIds);
+      return { data: result };
+    } catch (error) {
+      console.error("Error in assignTasks:", error);
+      throw error;
+    }
+  }, [safeAssignTasks, attackDetector]);
+
+  const unassignTasks = useCallback(async (modelID: number, modelTaskIds: number[]) => {
+    try {
+      // Check for potential IDOR attack
+      const currentUserId = getCurrentUserId();
+      if (currentUserId && !attackDetector.recordAccess(modelID, currentUserId)) {
+        throw new Error("Too many requests. Please slow down.");
+      }
+
+      // Use safe unassignment with IDOR protection
+      const result = await safeUnassignTasks(modelID, modelTaskIds);
+      return { data: result };
+    } catch (error) {
+      console.error("Error in unassignTasks:", error);
+      throw error;
+    }
+  }, [safeUnassignTasks, attackDetector]);
+
+  // Helper function to get current user ID
+  const getCurrentUserId = (): number | null => {
+    try {
+      const userData = localStorage.getItem('user_data');
+      if (userData) {
+        const parsed = JSON.parse(userData);
+        return parsed.id || parsed.user_id || null;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error getting current user ID:', error);
+      return null;
+    }
+  };
 
   useDebouncedEffect(() => {
     const ar = refresh();
