@@ -10,6 +10,7 @@ import {
 import Button from "@/components/Button/Button";
 import { TModelMarketplace } from "@/models/modelMarketplace";
 import { formatDate } from "@/utils/formatDate";
+import { createSafeHtml } from "@/utils/sanitizeHtml";
 import "./Index.scss";
 
 interface IModelItemProps {
@@ -32,7 +33,7 @@ const MemoizedModelItem = (props: IModelItemProps) => {
           <div className="c-ml-model-item__header-title-text">{name}</div>
         </h4>
         {model_desc && (
-          <div className="c-ml-model-item__header-desc" dangerouslySetInnerHTML={{__html: model_desc}} />
+          <div className="c-ml-model-item__header-desc" dangerouslySetInnerHTML={createSafeHtml(model_desc)} />
         )}
       </div>
       <div className="c-ml-model-item__content">

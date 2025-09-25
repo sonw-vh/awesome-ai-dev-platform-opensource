@@ -18,6 +18,7 @@ import ModelPreview from "../ModelPreviewNew/Index";
 import LineChart from "../../Chart/LineChart";
 import { storeInputFields, removeStoreInputFields, IAddModelData } from "@/pages/Project/Settings/ML/ML";
 import { useApi } from "@/providers/ApiProvider";
+import { createSafeHtml } from "@/utils/sanitizeHtml";
 import { formatBytes } from "@/utils/customFormat";
 import InputBase from "../../InputBase/InputBase";
 import { TProjectModel } from "@/models/project";
@@ -878,7 +879,7 @@ const Component = ({ item, project, onBackClick, onCompleted, needConfirmResetCo
           </div>
           <div
             className="p-model-detail__content-desc"
-            dangerouslySetInnerHTML={{ __html: item?.model_desc }}
+            dangerouslySetInnerHTML={createSafeHtml(item?.model_desc || '')}
           />
           {item.file && (
             <div className="p-model-detail__demo-img">

@@ -17,6 +17,7 @@ import {
 import Button from "@/components/Button/Button";
 import { confirmDialog, infoDialog } from "@/components/Dialog";
 import Modal from "@/components/Modal/Modal";
+import { createSafeHtml } from "@/utils/sanitizeHtml";
 import {
   Gpus,
   useUpdateModelMarketplace,
@@ -688,7 +689,7 @@ const ModelDetail = () => {
           </div>
           <div
             className="p-model-detail__content-desc"
-            dangerouslySetInnerHTML={{ __html: item?.model_desc }}
+            dangerouslySetInnerHTML={createSafeHtml(item?.model_desc || '')}
           />
           {item.file && (
             <div className="p-model-detail__demo-img">
